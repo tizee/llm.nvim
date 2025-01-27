@@ -31,11 +31,11 @@ def load_api_keys(api_keys_path):
 def init_db(db_path):
     # Ensure the directory for the db_path exists
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    
+
     # Create a new connection (this will create the file if it doesn't exist)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     # Create the table if it doesn't already exist
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS conversations (
@@ -64,7 +64,7 @@ def log_conversation(conversation_id, model_name, prompt, answer, db_path):
 # Function to interact with the LLM model
 def interact_with_model(model_name, prompt, system_prompt=None, api_key=None, api_base=None, can_stream=True, conversation_id=None, db_path=None):
     client = OpenAI(api_key=api_key, base_url=api_base)
-    
+
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -110,7 +110,7 @@ def print_logs(db_path):
     if not os.path.exists(db_path):
         print("Error: Logs database does not exist.")
         return
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM conversations ORDER BY timestamp DESC')

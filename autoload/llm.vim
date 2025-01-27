@@ -1,3 +1,4 @@
+" set ff=unix
 " autoload/llm.vim
 
 let s:plugin_root = expand('<sfile>:p:h:h')
@@ -19,12 +20,12 @@ function! LLM#RunLLM(prompt) abort
     let model_hint = model_name. ' > '
     " Get the current cursor position (line and column)
     let [current_line, current_col] = getpos('.')[1:2]
-    
+
     " Move the cursor to the target line
     call append(current_line, model_hint)
     call append(current_line, '')
     call cursor(current_line + 2, 1)
-    
+
     let last_line = line('$')
     " Add empty lines if the final line is out of range
     let final_line = current_line + 4
@@ -32,17 +33,17 @@ function! LLM#RunLLM(prompt) abort
         call append(line('$'), '')
         let last_line = last_line + 1
     endwhile
-    
+
     " Move the cursor to the final line
     call cursor(final_line, 1)
 
     " Variables for shell command and args
-    let shell_cmd = get(g:,'python3_host_prog','python')
+    let shell_cmd = get(g:,'python3_host_prog','python3')
     " enforce unbuffered output
     let shell_args = '-u'
 
     " Start a job to run the LLM CLI script
-    call jobstart([shell_cmd, shell_args, llm_cli_path, 'model', '-m', model_name, '--db-path', logs_path, '--config', config_path, '--api-keys', keys_path, '--system-prompt', system_prompt, a:prompt], { 
+    call jobstart([shell_cmd, shell_args, llm_cli_path, 'model', '-m', model_name, '--db-path', logs_path, '--config', config_path, '--api-keys', keys_path, '--system-prompt', system_prompt, a:prompt], {
                 \ 'on_stdout': {j,d,e->s:HandleStream(j,d,e)},
                 \ 'on_stderr': {j,d,e->s:HandleError(j,d,e)},
                 \ 'stdout_buffered': v:false })
@@ -74,24 +75,21 @@ function s:HandleStream(_, data, event) abort
     endif
 
     " Iterate over each line of received data
-    for line in a:data
-        let line = substitute(line, '\r\n', '\n', 'g')
+    for parts in a:data
+        let line = split(parts, '\r\?\n', 1)
         " Iterate over each character in the line
-        for char in split(line, '\zs')
+        for char in line
             " Append character to the current line
-            if char == '\n' || char == ''
-                " Move to the next line if a newline character is encountered
-                if line('.') == line('$')
-                    call append(line('$'), '')
-                endif
-                call cursor(line('.') + 1, 1)
-                " Clean the line for new content
-                call setline(line('.') + 1, "")
-            else
-                let current_text = getline('.')
-                let new_text = current_text. char
-                call setline(".", new_text)
-                call cursor(".", len(new_text))
+            let current_text = getline('.')
+            let new_text = current_text. char
+            call setline(line('.'), new_text)
+            call cursor(line('.'), len(new_text))
+            " Move to the next line if this part ends with a line break
+            if char == ''
+              if line('.') == line('$')
+                  call append(line('$'), '')
+              endif
+              call cursor(line('.') + 1, 1)
             endif
         endfor
     endfor
@@ -101,9 +99,7 @@ endfunction
 
 function! LLM#SendSelectionAsPrompt() range abort
     " Get the selected text using the range
-    if has("win32")
-        let prompt = join(getline(a:firstline, a:lastline), "\n")
-    endif
+    let prompt = join(getline(a:firstline, a:lastline), "\n")
 
     " Run the LLM with the selected text as prompt
     call LLM#RunLLM(prompt)
