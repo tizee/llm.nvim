@@ -38,9 +38,13 @@ function! LLM#RunLLM(prompt) abort
     call cursor(final_line, 1)
 
     " Variables for shell command and args
-    let shell_cmd = get(g:,'python3_host_prog','python3')
-    " enforce unbuffered output
-    let shell_args = '-u'
+    if executable('uv')
+        let shell_cmd = 'uv'
+        let shell_args = 'run'
+    else
+        let shell_cmd = get(g:,'python3_host_prog','python3')
+        let shell_args = '-u'
+    endif
 
     " Start a job to run the LLM CLI script
     call jobstart([shell_cmd, shell_args, llm_cli_path, 'model', '-m', model_name, '--db-path', logs_path, '--config', config_path, '--api-keys', keys_path, '--system-prompt', system_prompt, a:prompt], {

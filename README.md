@@ -9,6 +9,8 @@ A llm neovim plugin for llm compatiable with openai python sdk.
 pip install pyyaml openai
 ```
 
+- If you have `uv` installed, then you do not need install these pacakges manually.
+
 ## Usage
 
 ```vimscript

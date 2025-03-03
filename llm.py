@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.8"
+# dependencies = [
+#   "pyyaml",
+#   "openai",
+# ]
+# ///
+
 import argparse
 import os
 import sys
